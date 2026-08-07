@@ -9,12 +9,6 @@ word while reading, tap **Add to Anki**, and the plugin builds a complete card
 from the sentence and your local dictionaries without any network. Cards wait in
 a queue and are pushed to Anki over AnkiConnect when you sync.
 
-> **About this plugin.** This plugin was developed end-to-end with Anthropic's
-> Claude Opus 4.8. There is no active human maintainer behind it — it was built
-> to solve a personal need and is shared as-is, without warranty. Contributions
-> and maintainers are very welcome: if you'd like to improve or take over the
-> project, please open an issue or pull request.
-
 > Requires a recent **KOReader** build. It supports both the current
 > dictionary-button API (`addToDictButtons`) and the older `onDictButtonsReady`
 > event, so the **Add to Anki** button works on old *and* new KOReader.

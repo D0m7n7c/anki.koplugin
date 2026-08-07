@@ -112,14 +112,16 @@ function Anki:onDictButtonsReady(dict_popup, buttons)
 end
 
 --- Run a sync of the offline queue and report the outcome.
-function Anki:do_sync()
+-- `menu` is the TouchMenu instance (passed to the menu callback); if given, its
+-- items are refreshed after the sync so the "Sync now (N)" counter updates.
+function Anki:do_sync(menu)
     local profile = self.profiles:effective(self.ui)
     if not profile then
         return compat.ui.toast(_("No profile yet. Create one via Anki settings → New profile."), 4)
     end
     local synced, failed, err, needs_setup = Sync.run(profile)
     if needs_setup then
-        return self:prompt_setup(profile)
+        return self:prompt_setup(profile, menu)
     end
     local msg
     if synced == 0 and failed > 0 and err then
@@ -129,10 +131,11 @@ function Anki:do_sync()
         if err then msg = msg .. "\n" .. err end
     end
     compat.ui.toast(msg, 3)
+    if menu and menu.updateItems then menu:updateItems() end -- refresh the counter
 end
 
 --- Reactive prompt when the note type and/or deck don't exist in Anki yet.
-function Anki:prompt_setup(profile)
+function Anki:prompt_setup(profile, menu)
     local missing_model, missing_deck = Setup.check_missing(profile)
     local parts = {}
     if missing_deck then parts[#parts + 1] = _("the deck") .. ' "' .. profile.deck .. '"' end
@@ -149,13 +152,13 @@ function Anki:prompt_setup(profile)
         text = msg,
         ok_text = _("Create and sync"),
         cancel_text = _("Not now"),
-        ok_callback = function() self:create_and_sync(profile) end,
+        ok_callback = function() self:create_and_sync(profile, menu) end,
     })
 end
 
 --- Create the deck + note type, then sync. On a note-type field conflict, show
 --- an error (the user must rename/delete the note type in Anki) and stop.
-function Anki:create_and_sync(profile)
+function Anki:create_and_sync(profile, menu)
     local cardtype = cardtypes.get(profile.card_type)
     AnkiConnect.create_deck(profile.url, profile.api_key, profile.deck) -- idempotent
 
@@ -180,7 +183,7 @@ function Anki:create_and_sync(profile)
         return compat.ui.toast(_("Note type error") .. ":\n" .. tostring(detail), 6)
     end
 
-    self:do_sync()
+    self:do_sync(menu)
 end
 
 --- Let the user pick which profile applies to the current book.
@@ -249,7 +252,7 @@ function Anki:addToMainMenu(menu_items)
                     return _("Sync now") .. " (" .. Queue.count() .. ")"
                 end,
                 keep_menu_open = true,
-                callback = function() self:do_sync() end,
+                callback = function(touchmenu_instance) self:do_sync(touchmenu_instance) end,
             },
         },
     }

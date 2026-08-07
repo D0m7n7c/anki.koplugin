@@ -12,26 +12,22 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v4
 
-      # KOReader runs on LuaJIT (Lua 5.1 semantics), so we test against 5.1.
-      - name: Set up Lua 5.1
-        uses: leafo/gh-actions-lua@v10
-        with:
-          luaVersion: "5.1"
-
-      - name: Set up LuaRocks
-        uses: leafo/gh-actions-luarocks@v4
-
-      - name: Install luacheck and busted
+      # Installing luarocks from apt pulls in Lua 5.1 (matching KOReader's LuaJIT
+      # semantics) and points /usr/bin/lua at it. Same approach as the sibling
+      # KOReader plugins — no source build, no flaky lua.org download.
+      - name: Install Lua tooling
         run: |
-          luarocks install luacheck
-          luarocks install busted
+          sudo apt-get update
+          sudo apt-get install -y luarocks
+          sudo luarocks install luacheck
+          sudo luarocks install busted
 
       # Lint every Lua file (advisory: warnings don't fail the build).
       - name: Lint (luacheck)
         continue-on-error: true
         run: luacheck .
 
-      # Syntax-check every Lua file so a parse error always fails CI.
+      # Parse every Lua file on Lua 5.1 so a syntax error always fails CI.
       - name: Syntax check
         run: |
           for f in $(find . -name '*.lua'); do

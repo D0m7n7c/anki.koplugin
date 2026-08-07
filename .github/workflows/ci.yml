@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: Lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      # KOReader runs on LuaJIT (Lua 5.1 semantics), so we test against 5.1.
+      - name: Set up Lua 5.1
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.1"
+
+      - name: Set up LuaRocks
+        uses: leafo/gh-actions-luarocks@v4
+
+      - name: Install luacheck and busted
+        run: |
+          luarocks install luacheck
+          luarocks install busted
+
+      # Lint every Lua file (advisory: warnings don't fail the build).
+      - name: Lint (luacheck)
+        continue-on-error: true
+        run: luacheck .
+
+      # Syntax-check every Lua file so a parse error always fails CI.
+      - name: Syntax check
+        run: |
+          for f in $(find . -name '*.lua'); do
+            lua -e "assert(loadfile('$f'))" || exit 1
+          done
+
+      # Run the unit tests for the pure-logic modules.
+      - name: Run tests (busted)
+        run: busted --verbose

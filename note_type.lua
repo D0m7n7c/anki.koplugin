@@ -41,7 +41,7 @@ end
 
 --- Create the note type. Returns true | false, err.
 function NoteType.create(url, api_key, cardtype)
-    local _r, err = AnkiConnect.create_model(url, api_key, cardtype.note_type,
+    local _, err = AnkiConnect.create_model(url, api_key, cardtype.note_type,
         cardtype.fields, cardtype.front, cardtype.back, cardtype.css)
     if err then return false, err end
     return true

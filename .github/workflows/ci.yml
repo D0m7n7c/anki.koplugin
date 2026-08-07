@@ -22,9 +22,8 @@ jobs:
           sudo luarocks install luacheck
           sudo luarocks install busted
 
-      # Lint every Lua file (advisory: warnings don't fail the build).
+      # Lint every Lua file (0 warnings expected).
       - name: Lint (luacheck)
-        continue-on-error: true
         run: luacheck .
 
       # Parse every Lua file on Lua 5.1 so a syntax error always fails CI.

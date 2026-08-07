@@ -10,7 +10,6 @@ local _ = require("gettext")
 
 local compat = require("koreader_compat")
 local AnkiConnect = require("ankiconnect")
-local NoteType = require("note_type")
 
 local Setup = {}
 

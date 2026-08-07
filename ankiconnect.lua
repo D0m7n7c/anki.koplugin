@@ -15,14 +15,13 @@ local socketutil = require("socketutil")
 local ltn12 = require("ltn12")
 local mime = require("mime")
 local json = require("rapidjson")
-local logger = require("logger")
 
 local AnkiConnect = {}
 
 --- Fix common URL mistakes (missing scheme, https where http meant).
 function AnkiConnect.sanitize_url(url)
     local valid = url
-    local _u, scheme_end, scheme, ssl = url:find("^(http(s?)://)")
+    local _, scheme_end, scheme, ssl = url:find("^(http(s?)://)")
     if not scheme then
         valid = "http://" .. url
     elseif ssl and #ssl > 0 then

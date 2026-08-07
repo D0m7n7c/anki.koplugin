@@ -1,9 +1,10 @@
 -- Tests for sentence extraction / spacing. Stubs KOReader's "util".
 package.path = "./?.lua;./?/init.lua;" .. package.path
 package.loaded["util"] = {
+  -- UTF-8 aware split that works on any Lua (no utf8 library needed)
   splitToChars = function(s)
     local t = {}
-    for _, c in utf8.codes(s or "") do t[#t + 1] = utf8.char(c) end
+    for c in (s or ""):gmatch("[\1-\127\194-\244][\128-\191]*") do t[#t + 1] = c end
     return t
   end,
 }

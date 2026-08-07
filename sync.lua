@@ -36,7 +36,7 @@ function Sync.run(profile)
         if needs_setup then
             remaining[#remaining + 1] = note
         else
-            local _r, aerr = AnkiConnect.add_note(profile.url, profile.api_key, to_anki_note(note))
+            local _, aerr = AnkiConnect.add_note(profile.url, profile.api_key, to_anki_note(note))
             if aerr then
                 local low = aerr:lower()
                 if low:find("duplicate") then

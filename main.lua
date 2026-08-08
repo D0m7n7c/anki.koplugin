@@ -44,9 +44,44 @@ local Anki = WidgetContainer:extend{
 function Anki:on_add(dict_popup)
     local profile = self.profiles:effective(self.ui)
     if not profile then
-        return compat.ui.toast(_("No profile yet. Create one via Anki settings → New profile."), 4)
+        local lang = compat.doc.language(self.ui) or "?"
+        return compat.ui.toast(string.format(
+            _("No profile matches this book's language (%s).\nPick one via “Profile for this book”."),
+            lang), 5)
     end
+    -- first mine per book for this profile: confirm which profile is being used
+    -- (a manual override is already marked confirmed, so it shows no dialog)
+    if not self.profiles:book_notified(self.ui, profile._name) then
+        return self:confirm_profile(dict_popup, profile)
+    end
+    self:build_and_tag(dict_popup, profile)
+end
 
+--- One-time-per-book confirmation of the auto-chosen profile (Cancel | OK).
+function Anki:confirm_profile(dict_popup, profile)
+    local msg = string.format(_("Profile “%s” will be used for this book."), profile._name)
+    if profile._ambiguous then
+        msg = msg .. "\n" ..
+            _("Several profiles match this language — change it under “Profile for this book” if needed.")
+    end
+    local dialog
+    dialog = ButtonDialog:new{
+        title = msg,
+        title_align = "left",
+        buttons = { {
+            { text = _("Cancel"), callback = function() UIManager:close(dialog) end },
+            { text = _("OK"), callback = function()
+                UIManager:close(dialog)
+                self.profiles:set_book_notified(self.ui, profile._name)
+                self:build_and_tag(dict_popup, profile)
+            end },
+        } },
+    }
+    UIManager:show(dialog)
+end
+
+--- Build the note and run the tag dialog, then queue it.
+function Anki:build_and_tag(dict_popup, profile)
     local note = NoteBuilder.build(self.ui, dict_popup, profile)
 
     -- tag palette = auto-tag (pre-selected) + custom tags
@@ -115,7 +150,7 @@ end
 -- `menu` is the TouchMenu instance (passed to the menu callback); if given, its
 -- items are refreshed after the sync so the "Sync now (N)" counter updates.
 function Anki:do_sync(menu)
-    local profile = self.profiles:effective(self.ui)
+    local profile = self.profiles:sync_fallback(self.ui)
     if not profile then
         return compat.ui.toast(_("No profile yet. Create one via Anki settings → New profile."), 4)
     end
